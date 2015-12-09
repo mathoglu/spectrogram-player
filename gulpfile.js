@@ -19,7 +19,7 @@ var paths = {
 
 gulp.task('server', serve({
         root: './',
-        port: 3333
+        port: process.env.PORT || 3000
     })
 );
 
