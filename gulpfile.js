@@ -27,7 +27,7 @@ gulp.task('watch', function() {
     gulp.watch([paths.source + 'modules/*.js', paths.source + '*.js'], ['scripts', 'workers']);
     gulp.watch([paths.source + 'workers/*.js'], ['workers']);
     gulp.watch([paths.source + '*.html'], ['move']);
-    gulp.watch([paths.source + 'styles/styles.scss'], ['sass']);
+    gulp.watch([paths.source + 'styles/**/*.scss'], ['sass']);
 });
 
 gulp.task('scripts', function () {
@@ -53,7 +53,7 @@ gulp.task('move', function() {
 });
 
 gulp.task('sass', function() {
-  gulp.src(paths.source + 'styles/styles.scss')
+  gulp.src(paths.source + 'styles/main.scss')
         .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer())

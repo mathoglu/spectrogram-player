@@ -5,6 +5,7 @@ const choices = document.getElementsByClassName('choice');
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const audioWorker = new Worker('lib/workers/audio-worker.js');
 const scpr = ctx.createScriptProcessor(1024, 1, 1);
+let allData = [];
 navigator.getUserMedia = (navigator.getUserMedia ||
 							navigator.webkitGetUserMedia ||
 							navigator.mozGetUserMedia ||
@@ -13,11 +14,10 @@ navigator.getUserMedia = (navigator.getUserMedia ||
 const gn = ctx.createGain();
 let s,
 	duration,
-	waitForWindow = ()=> {
+	waitForUserChoice = ()=> {
 		return new Promise((resolve)=> {
 			for(let i = 0;i < choices.length; i++) {
 				choices[i].onclick = (e)=> {
-					e.target.parentNode.parentNode.removeChild(e.target.parentNode);
 					resolve(e.target.id);
 				}
 			}
@@ -31,9 +31,11 @@ let s,
 			}
 		});
 	},
-	waitForUserChoice = ()=> {
+	waitForWindow = ()=> {
 		return new Promise((resolve)=> {
-			window.onload = resolve;
+			window.onload = ()=>{
+				resolve();
+			}
 		});
 	};
 
@@ -52,6 +54,7 @@ let connect = (type, theSource)=> {
 
 
 	audioWorker.onmessage = (e)=> {
+		allData.push(e.data);
 		s.draw(e.data);
 	};
 };
@@ -61,11 +64,13 @@ let initSpectrogram = ()=> {
 	s = spectrogram({
 		selector: '#graph',
 		limits: {
-			max: 20,
+			max: 5,
 			min: 0
 		},
+		zoomFactor: 1,
 		N: scpr.bufferSize/2,
-		height: 500,
+		height: 400,
+		screenWidth: screen.width,
 		fs: ctx.sampleRate,
 		secondsPerFrame: (scpr.bufferSize / ctx.sampleRate),
 		lengthInFrames: duration / (scpr.bufferSize / ctx.sampleRate),
@@ -79,8 +84,6 @@ gn.value = 1;
 scpr.onaudioprocess = (e)=> {
 	let inputData = e.inputBuffer.getChannelData(0),
 		outputData = e.outputBuffer.getChannelData(0);
-	//dft2.forward(inputData);
-	//outputData = dft2.spectrum;
 	audioWorker.postMessage(inputData);
 	//
 	for (let i=0; i < inputData.length; i++) {
@@ -89,24 +92,24 @@ scpr.onaudioprocess = (e)=> {
 };
 
 Promise.all([waitForUserChoice(), waitForAudio(), waitForWindow()])
-	.then((choice)=>{
-		if(choice[2] === 'load') {
+	.then((resolved)=>{
+		if(resolved[0] === 'load') {
 			connect('audio', source);
 			source.play();
 		}
-		else if (choice[2] === 'mic') {
+		else if (resolved[0] === 'mic') {
 			if (navigator.getUserMedia) {
-				navigator.getUserMedia (
+				navigator.getUserMedia(
 					{ audio: true },
 					(stream)=> {
 						connect('stream', stream);
 					},
 					(err)=> {
-						console.log('The following gUM error occured: ' + err);
+						alert('An error occured?:', err);
 					}
 				);
 			} else {
-				console.log('getUserMedia not supported on your browser!');
+				alert('Using the microphone is not supported on your browser!');
 			}
 		}
 

@@ -33,7 +33,8 @@ let dft = (opts)=> {
 			real,
 			_output = output,
 			_sin = sin,
-			_cos = cos;
+			_cos = cos,
+			_window = opts.windowFunc;
 
 		for(let k = 0; k < windowSize/2; k++) {
 
@@ -41,8 +42,8 @@ let dft = (opts)=> {
 			real = 0.0;
 
 			for(let n = 0; n < input.length; n++) {
-				real += input[n] * _cos[n*k];
-				img += input[n] * _sin[n*k];
+				real += _window(n) * input[n] * _cos[n*k];
+				img += _window(n) * input[n] * _sin[n*k];
 			}
 
 			_output[k] = 2 * distance(real,img) / windowSize;

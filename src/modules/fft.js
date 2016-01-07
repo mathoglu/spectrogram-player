@@ -19,7 +19,7 @@ let fft = (opts)=> {
 		let N = input.length;
 
 		if(N == 1) {
-			return [{r: input[0], i: 0}];
+			return [{r: opts.windowFunc(0)*input[0], i: 0}];
 		}
 		else {
 			let {even, odd} = splitEvenOdd(input),

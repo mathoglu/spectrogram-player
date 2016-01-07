@@ -13,12 +13,11 @@ let _graph,
 	yAxis,
 	nr = 0,
 	margin = {
-		top: 20,
-		right: 20,
+		top: 50,
+		right: 30,
 		bottom: 50,
 		left: 100
 	},
-	width = 1280 - margin.left - margin.right,
 	dot = {
 		h: 0.0,
 		w: 0.0
@@ -27,21 +26,31 @@ let _graph,
 
 let _initGraph = (opts)=> {
 
+	dot.h = opts.height / (opts.N / opts.zoomFactor);
+	dot.w = 1;
+
+	let width;
+	console.log(opts.screenWidth, opts.lengthInFrames);
+	if(opts.screenWidth > opts.lengthInFrames) {
+		width = opts.screenWidth - margin.left - margin.right;
+		dot.w = opts.screenWidth / opts.lengthInFrames;
+	}
+	else {
+		width = opts.lengthInFrames*dot.w - margin.left - margin.right;
+	}
+
 	x = d3.scale.linear()
 		.domain([0, opts.lengthInFrames * opts.secondsPerFrame])
 		.range([0, width]);
 
 	y = d3.scale.linear()
-		.domain([0, opts.fs/2])
+		.domain([0, opts.fs/ (2*opts.zoomFactor)])
 		.range([opts.height,0]);
 
 	z = d3.scale.linear()
 		.domain([opts.limits.min, (opts.limits.min + (opts.limits.max-opts.limits.min)/2) , opts.limits.max])
-		.range(["white", "green", "blue"])
+		.range(["white", "yellow", "red"])
 		.interpolate(d3.interpolateLab);
-
-	dot.h = opts.height / opts.N;
-	dot.w = 1;
 
 	_graph = d3.select(opts.selector);
 	_svg = _graph.append('svg')
@@ -53,7 +62,7 @@ let _initGraph = (opts)=> {
 	_canvas = d3.select(opts.selector).append('canvas')
 		.attr('class','spectrogram')
 		.attr('height', opts.height + margin.top)
-		.attr('width', width + margin.left)
+		.attr('width', width)
 		.style("padding", d3.map(margin).values().join("px ") + "px");
 
 	let commasFormatter = d3.format(",.1f");
@@ -96,7 +105,7 @@ let _initGraph = (opts)=> {
 		_svg.select(".x.axis").call(xAxis);
 		_svg.select(".y.axis").call(yAxis);
 
-		for(let i = 0; i < data.length; i++) {
+		for(let i = 0; i < data.length /opts.zoomFactor; i++) {
 			let px = _x( coll * fPs );
 			let py = _y( btf(i) );
 			ctx.fillStyle = _z(magnitude(data[i]));
