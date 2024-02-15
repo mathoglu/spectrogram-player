@@ -6,7 +6,7 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
-import { GitHub, HelpOutline, PlayArrowSharp } from "@mui/icons-material";
+import { GitHub, PlayArrowSharp } from "@mui/icons-material";
 import { CircularProgress, FormControl, FormHelperText } from "@mui/material";
 import { HelpButton } from "./components/help-button";
 
