@@ -2,12 +2,12 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { Player } from "./components/player";
 import Button from "@mui/material/Button";
-import LoadingButton from "@mui/lab/LoadingButton";
 import TextField from "@mui/material/TextField";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
 import { GitHub, PlayArrowSharp } from "@mui/icons-material";
 import Link from "@mui/material/Link";
+import { CircularProgress, FormControl, FormHelperText } from "@mui/material";
 
 export type VideoMeta = {
     url: string;
@@ -48,6 +48,7 @@ function App() {
     const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
+    const [inputError, setInputError] = useState<string | null>(null);
 
     const onLoadAudio = useCallback(async (url: string) => {
         try {
@@ -60,8 +61,13 @@ function App() {
                 },
                 body: JSON.stringify({ url }),
             });
+            if (!audio.ok) {
+                const { error } = await audio.json();
+                throw new Error(error);
+            }
             bufferData.current = await audio.arrayBuffer();
         } catch (e) {
+            setInputError(e.message);
             console.error(e);
         }
     }, []);
@@ -76,9 +82,14 @@ function App() {
                 },
                 body: JSON.stringify({ url }),
             });
+            if (!info.ok) {
+                const { error } = await info.json();
+                throw new Error(error);
+            }
             const { title } = await (info.json() as Promise<{ title: string }>);
             setVideoMeta({ title, url });
         } catch (e) {
+            setInputError(e.message);
             console.error(e);
         }
     }, []);
@@ -131,19 +142,30 @@ function App() {
             ) : (
                 <>
                     <div className={css.inputContainer}>
-                        <TextField
-                            size="small"
-                            fullWidth
-                            onChange={e => setUrl(e.target.value)}
-                            placeholder="Add youtube URL here"
-                            disabled={isLoading}
-                            autoFocus
-                        />
+                        <FormControl fullWidth>
+                            <TextField
+                                size="small"
+                                error={!!inputError}
+                                onChange={e => {
+                                    setInputError(null);
+                                    setUrl(e.target.value);
+                                }}
+                                placeholder="Add youtube URL here"
+                                disabled={isLoading}
+                                autoFocus
+                            />
+                            {inputError && (
+                                <FormHelperText error>
+                                    {inputError}
+                                </FormHelperText>
+                            )}
+                        </FormControl>
                         {!isLoading ? (
                             <Button
-                                disabled={!url}
+                                disabled={!url || !!inputError}
                                 variant="text"
                                 size="large"
+                                startIcon={<PlayArrowSharp />}
                                 onClick={() => {
                                     onLoadData(url);
                                 }}
@@ -151,12 +173,7 @@ function App() {
                                 Play
                             </Button>
                         ) : (
-                            <LoadingButton
-                                size="large"
-                                variant="text"
-                                loading
-                                loadingPosition="start"
-                            ></LoadingButton>
+                            <CircularProgress size="40px" />
                         )}
                     </div>
                 </>

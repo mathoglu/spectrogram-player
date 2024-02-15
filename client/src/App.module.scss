@@ -9,7 +9,13 @@
     padding: 8px 0;
 }
 
-.inputContainer, .titleContainer, .link {
+.inputContainer {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.titleContainer, .link {
     display: flex;
     align-items: center;
     gap: 16px;
