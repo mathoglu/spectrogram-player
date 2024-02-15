@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run build --workspace @spectrotest/client && cp -r client/dist ./public",
-    "start": "npm start --workspace @spectrotest/server"
+    "build": "npm run build --workspace @spectrogram/client && rm -rf ./public && cp -r client/dist ./public",
+    "start": "NODE_ENV=production npm start --workspace @spectrogram/server",
+    "start:dev": "npm start --workspace @spectrogram/server"
   },
   "author": "",
   "license": "ISC",

@@ -7,7 +7,7 @@ const app = express();
 var http = require("http").createServer(app);
 
 const port = process.env.PORT || 3333;
-
+const isProd = process.env.NODE_ENV === "production";
 
 getAudio = (videoURL, res) => {
   ytdl(videoURL, {
@@ -23,6 +23,10 @@ getInfo = (videoURL, res) => {
 app.use(express.json()); // to support JSON-encoded bodies
 app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
 app.use(express.static(path.join(__dirname, '../public')))
+
+if (!isProd) {
+  app.use(cors());
+}
 
 app.get("/health", (req, res) => { 
   res.send()
