@@ -17,7 +17,15 @@ const frequencyToBinIndex = (
     frequency: number,
     sampleRate: number,
     windowSize: number,
-) => (frequency * windowSize) / sampleRate;
+) => Math.round((frequency * windowSize) / sampleRate);
+const getDomainForColors = (
+    colors: string[],
+    min: number,
+    max: number,
+): number[] => {
+    const step = (max - min) / (colors.length - 1);
+    return colors.map((_c, i) => min + i * step);
+};
 
 const padding = { left: 10, right: 10 };
 export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
@@ -30,13 +38,12 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
         const pointWidth = 1;
         const canvas = (canvasRef as MutableRefObject<HTMLCanvasElement | null>)
             .current;
-
         const requestRef = useRef<number>();
         const position = useRef(padding.left);
         const { current: colorScale } = useRef(
             scaleLinear<string, number>()
                 .range(settings.colors)
-                .domain([min, (max - min) / 2 + min, max])
+                .domain(getDomainForColors(settings.colors, min, max))
                 .interpolate(interpolateHcl),
         );
         const { current: yScale } = useRef(
@@ -59,16 +66,12 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
                 settings.windowSize,
             );
             const yScaling = graphHeight / (yScale(yMax) - yScale(yMin));
-            // const img = ctx.getImageData(0, 0, graphWidth, graphHeight);
-            // ctx.drawImage(
-            //     img,
-            //     0,
-            //     0,
-            //     position.current * pointWidth,
-            //     graphHeight * yScaling,
-            // );
+            const img = ctx.getImageData(0, 0, graphWidth, graphHeight);
+            const yOffset = -(graphHeight - yScale(yMax));
+            ctx.clearRect(0, 0, graphWidth, graphHeight);
             ctx.scale(1, yScaling);
-            ctx.translate(0, -(graphHeight - yScale(yMax)));
+            ctx.translate(0, yOffset);
+            ctx.putImageData(img, 0, 0);
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [
             settings.frequency.max,

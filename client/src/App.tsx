@@ -6,6 +6,7 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import TextField from "@mui/material/TextField";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
+import { PlayArrowSharp } from "@mui/icons-material";
 
 export type VideoMeta = {
     url: string;
@@ -15,13 +16,35 @@ export type VideoMeta = {
 const darkTheme = createTheme({
     palette: {
         mode: "dark",
+        primary: {
+            main: "#FFAC41",
+        },
+        secondary: {
+            main: "#ff1e56",
+        },
+        background: {
+            default: "#121212",
+            paper: "#323232",
+        },
+        text: {
+            primary: "#EEEEEE",
+        },
+    },
+    typography: {
+        fontFamily: "Montserrat",
+        h1: {
+            fontSize: "1.6rem",
+        },
+        h2: {
+            fontSize: "1.3rem",
+        },
     },
 });
 const apiURL = import.meta.env.VITE_API_URL || "";
 
 function App() {
-    const inputRef = useRef<HTMLInputElement>(null);
     const bufferData = useRef<ArrayBuffer | null>(null);
+    const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
 
@@ -68,37 +91,59 @@ function App() {
         [onLoadAudio, onLoadInfo],
     );
 
+    const onNew = useCallback(() => {
+        setVideoMeta(null);
+        bufferData.current = null;
+    }, []);
+
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            <h1 className={css.title}>Spectrogram</h1>
+            <div className={css.header}>
+                <h1 className={css.title}>spectrogram player</h1>
+                {bufferData.current !== null && videoMeta !== null && (
+                    <Button
+                        variant="text"
+                        startIcon={<PlayArrowSharp />}
+                        onClick={onNew}
+                    >
+                        Play another
+                    </Button>
+                )}
+            </div>
             {bufferData.current !== null && videoMeta !== null ? (
-                <Player
-                    videoMeta={videoMeta}
-                    audioBufferData={bufferData.current}
-                />
+                <div className={css.playerContainer}>
+                    <Player
+                        videoMeta={videoMeta}
+                        audioBufferData={bufferData.current}
+                    />
+                </div>
             ) : (
                 <>
-                    <h2>Generate Spectrogram from Youtube video</h2>
                     <div className={css.inputContainer}>
                         <TextField
+                            size="small"
                             fullWidth
-                            inputRef={inputRef}
+                            onChange={e => setUrl(e.target.value)}
                             placeholder="Add youtube URL here"
                             disabled={isLoading}
+                            autoFocus
                         />
                         {!isLoading ? (
                             <Button
+                                disabled={!url}
+                                variant="text"
                                 size="large"
                                 onClick={() => {
-                                    onLoadData(inputRef.current?.value || "");
+                                    onLoadData(url);
                                 }}
                             >
-                                Generate
+                                Play
                             </Button>
                         ) : (
                             <LoadingButton
                                 size="large"
+                                variant="text"
                                 loading
                                 loadingPosition="start"
                             ></LoadingButton>

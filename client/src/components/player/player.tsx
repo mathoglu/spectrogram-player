@@ -36,7 +36,7 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
             min: 0,
             max: 24000,
         },
-        colors: ["black", "#ffce00", "red"],
+        colors: ["#000000", "#323232", "#FFAC41", "#FF1E56"],
         duration: 0,
         sampleRate: 0,
         windowSize: 0,
