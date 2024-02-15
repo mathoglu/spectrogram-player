@@ -67,7 +67,7 @@ function App() {
             }
             bufferData.current = await audio.arrayBuffer();
         } catch (e) {
-            setInputError(e.message);
+            setInputError((e as Error).message);
             console.error(e);
         }
     }, []);
@@ -88,8 +88,8 @@ function App() {
             }
             const { title } = await (info.json() as Promise<{ title: string }>);
             setVideoMeta({ title, url });
-        } catch (e) {
-            setInputError(e.message);
+        } catch (e: unknown) {
+            setInputError((e as Error).message);
             console.error(e);
         }
     }, []);
