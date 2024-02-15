@@ -1,6 +1,7 @@
 import { FC, useEffect, useRef } from "react";
 import { scaleLinear } from "d3-scale";
 import css from "./spectrogram.module.scss";
+import { interpolateHcl } from "d3-interpolate";
 
 type Props = {
     min: number;
@@ -10,13 +11,6 @@ type Props = {
     onProcess: () => Float32Array;
 } & JSX.IntrinsicElements["div"];
 
-const areEqual = (a: Float32Array, b: Float32Array): boolean => {
-    for (let i = 0; i < a.length; ++i) {
-        if (a[i] !== b[i]) return false;
-    }
-    return true;
-};
-
 export const Spectrogram: FC<Props> = ({
     min,
     max,
@@ -25,15 +19,16 @@ export const Spectrogram: FC<Props> = ({
     onProcess,
     ...rest
 }) => {
-    const graphWidth = 1000;
+    const graphWidth = 10000;
     const graphHeight = 600;
     const requestRef = useRef<number>();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const position = useRef(0);
     const { current: colorScale } = useRef(
         scaleLinear<string, number>()
-            .range(["transparent", "red"])
-            .domain([min, max]),
+            .range(["transparent", "#ffce00", "red"])
+            .domain([min, (max - min) / 2 + min, max])
+            .interpolate(interpolateHcl),
     );
     const { current: yScale } = useRef(
         scaleLinear().range([graphHeight, 0]).domain([0, binCount]),
@@ -72,7 +67,7 @@ export const Spectrogram: FC<Props> = ({
     return (
         <div
             className={css.container}
-            style={{ width: graphWidth, height: graphHeight }}
+            style={{ width: 1000, height: graphHeight }}
             {...rest}
         >
             <canvas

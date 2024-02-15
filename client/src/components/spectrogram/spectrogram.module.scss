@@ -1,6 +1,7 @@
 .container {
     position: relative;
     display: grid;
+    overflow-x: scroll;
 }
 
 .canvas, .svg {

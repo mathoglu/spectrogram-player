@@ -10,15 +10,17 @@ import {
     PlayCircleFilled,
     PauseCircleFilled,
     VolumeUp,
-    RestartAlt,
+    VolumeOff,
 } from "@mui/icons-material";
 import { Counter } from "../counter/counter";
+
+const apiURL = import.meta.env.VITE_API_URL || "";
 
 export const Player: FC = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const { current: audioCtx } = useRef(
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         new (window.AudioContext || window.webkitAudioContext)(),
     );
     const audioSource = useRef<AudioBufferSourceNode>(null);
@@ -28,11 +30,15 @@ export const Player: FC = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isEnded, setIsEnded] = useState(false);
     const [duration, setDuration] = useState(0);
-    const [iteration, setIteration] = useState(0);
+    const [volume, setVolume] = useState(100);
     const [videoData, setVideoData] = useState<{
         url: string;
         title: string;
     } | null>(null);
+
+    useEffect(() => {
+        gain.gain.value = volume / 100;
+    }, [gain, volume]);
 
     useEffect(() => {
         function sourceEnded() {
@@ -46,16 +52,12 @@ export const Player: FC = () => {
             analyser.smoothingTimeConstant = 0;
 
             if (!src || !src.buffer) return;
-            gain.gain.value = 1;
             setDuration(src.buffer?.duration);
 
             src.connect(analyser).connect(gain).connect(audioCtx.destination);
             src.start();
             audioCtx.suspend();
 
-            console.log(
-                (src.buffer?.duration * audioCtx.sampleRate) / analyser.fftSize,
-            );
             src.addEventListener("ended", sourceEnded);
             return () => {
                 src.removeEventListener("ended", sourceEnded);
@@ -72,7 +74,7 @@ export const Player: FC = () => {
     const onLoadAudio = useCallback(
         async (url: string) => {
             if (!url) return;
-            const audio = await fetch("http://localhost:3333/audio", {
+            const audio = await fetch(`${apiURL}/audio`, {
                 method: "POST",
                 headers: {
                     Accept: "application/json",
@@ -92,7 +94,7 @@ export const Player: FC = () => {
     );
 
     const onLoadInfo = useCallback(async (url: string) => {
-        const info = await fetch("http://localhost:3333/info", {
+        const info = await fetch(`${import.meta.env.VITE_API_URL}/info`, {
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -114,20 +116,6 @@ export const Player: FC = () => {
         audioCtx.suspend();
         setIsPlaying(false);
     }, [audioCtx]);
-
-    const onRestart = useCallback(() => {
-        if (!audioSource || !videoData) return;
-        setIteration(i => i + 1);
-        setIsEnded(false);
-        onLoadAudio(videoData?.url);
-    }, [onLoadAudio, videoData]);
-
-    const onVolumeChange = useCallback(
-        (value: number) => {
-            gain.gain.value = value / 100;
-        },
-        [gain],
-    );
 
     return (
         <>
@@ -155,7 +143,6 @@ export const Player: FC = () => {
                         )}
                         {isReady && (
                             <Spectrogram
-                                key={iteration}
                                 onProcess={onProcess}
                                 max={analyser.maxDecibels}
                                 min={analyser.minDecibels}
@@ -164,36 +151,41 @@ export const Player: FC = () => {
                             />
                         )}
                         <div className={css.controlBar}>
-                            {!isEnded ? (
-                                <IconButton
-                                    onClick={isPlaying ? onPause : onStart}
-                                >
-                                    {isPlaying ? (
-                                        <PauseCircleFilled />
-                                    ) : (
-                                        <PlayCircleFilled />
-                                    )}
-                                </IconButton>
-                            ) : (
-                                <IconButton onClick={onRestart}>
-                                    <RestartAlt />
-                                </IconButton>
-                            )}
+                            <IconButton
+                                disabled={isEnded}
+                                onClick={isPlaying ? onPause : onStart}
+                            >
+                                {isPlaying ? (
+                                    <PauseCircleFilled />
+                                ) : (
+                                    <PlayCircleFilled />
+                                )}
+                            </IconButton>
+
                             <div className={css.volumeButton}>
-                                <IconButton>
-                                    <VolumeUp />
+                                <IconButton disabled={isEnded}>
+                                    {volume === 0 ? (
+                                        <VolumeOff
+                                            onClick={() => setVolume(60)}
+                                        />
+                                    ) : (
+                                        <VolumeUp
+                                            onClick={() => setVolume(0)}
+                                        />
+                                    )}
                                 </IconButton>
                             </div>
                             <div className={css.volumeControl}>
                                 <div className={css.sliderContainer}>
                                     <Slider
                                         className={css.volumeInput}
+                                        value={volume}
                                         min={0}
                                         step={1}
                                         max={100}
                                         size="small"
-                                        onChangeCommitted={(e, value) =>
-                                            onVolumeChange(value as number)
+                                        onChange={(_e, value) =>
+                                            setVolume(value as number)
                                         }
                                     />
                                 </div>
