@@ -1,26 +1,32 @@
 import { FC, useEffect, useRef } from "react";
 import { scaleLinear } from "d3-scale";
+import css from "./spectrogram.module.scss";
 
 type Props = {
     min: number;
     max: number;
-    duration: number;
-    sampleRate: number;
     binCount: number;
-    fftSize: number;
+    isPlaying: boolean;
     onProcess: () => Float32Array;
 } & JSX.IntrinsicElements["div"];
+
+const areEqual = (a: Float32Array, b: Float32Array): boolean => {
+    for (let i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+};
 
 export const Spectrogram: FC<Props> = ({
     min,
     max,
-    duration,
-    sampleRate,
     binCount,
-    fftSize,
+    isPlaying,
     onProcess,
     ...rest
 }) => {
+    const graphWidth = 1000;
+    const graphHeight = 600;
     const requestRef = useRef<number>();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const position = useRef(0);
@@ -30,14 +36,12 @@ export const Spectrogram: FC<Props> = ({
             .domain([min, max]),
     );
     const { current: yScale } = useRef(
-        scaleLinear().range([400, 0]).domain([0, binCount]),
+        scaleLinear().range([graphHeight, 0]).domain([0, binCount]),
     );
 
-    const dataLength = (sampleRate * duration * 2.8) / fftSize;
-    const pointWidth = 1000 / dataLength;
-    const pointHeight = 400 / binCount;
-
     useEffect(() => {
+        const pointWidth = 1;
+        const pointHeight = graphHeight / binCount;
         const animate = () => {
             if (!requestRef.current || !canvasRef.current) return;
             const ctx = canvasRef.current.getContext("2d");
@@ -55,20 +59,29 @@ export const Spectrogram: FC<Props> = ({
             position.current = position.current + 1;
             requestRef.current = requestAnimationFrame(animate);
         };
-        requestRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(requestRef.current || 0);
+        if (isPlaying) {
+            requestRef.current = requestAnimationFrame(animate);
+        }
+        return () => {
+            console.log(position.current);
+            cancelAnimationFrame(requestRef.current || 0);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isPlaying]);
 
     return (
-        <div {...rest}>
+        <div
+            className={css.container}
+            style={{ width: graphWidth, height: graphHeight }}
+            {...rest}
+        >
             <canvas
-                className={css}
-                width={1000}
-                height={400}
+                className={css.canvas}
+                width={graphWidth}
+                height={graphHeight}
                 ref={canvasRef}
-            ></canvas>
-            <svg></svg>
+            />
+            <svg width={graphWidth} height={graphHeight} className={css.svg} />
         </div>
     );
 };

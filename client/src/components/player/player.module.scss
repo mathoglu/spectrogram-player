@@ -1,0 +1,54 @@
+.container {
+    position: relative;
+    background-color: black;
+    padding: 12px;
+    border-radius: 12px;
+  }
+  
+  .controlBar {
+    position: absolute;
+    bottom: 12px;
+    left: 0px;
+    width: 100%;
+    height: 50px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+  }
+  
+  .volumeButton:hover + .volumeControl {
+    max-width: 80px;
+  }
+  
+  .icon {
+    background: none;
+    width: 24px;
+    height: 24px;
+  }
+  
+  .volumeControl {
+    overflow: hidden;
+    color: white;
+    max-width: 0px;
+    transition: max-width 200ms ease-in-out;
+  
+    &:hover {
+      max-width: 80px;
+    }
+  }
+  
+  .sliderContainer {
+    margin: 0 12px;
+    width: 56px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .volumeInput {
+    width: 80px;
+  }
+
+  .counter {
+    height: 40px;
+  }
