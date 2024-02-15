@@ -1,82 +1,133 @@
-import { FC, useEffect, useRef } from "react";
+import { MutableRefObject, forwardRef, useEffect, useRef } from "react";
 import { scaleLinear } from "d3-scale";
 import css from "./spectrogram.module.scss";
 import { interpolateHcl } from "d3-interpolate";
+import type { SpectrogramSettings } from "../settings";
 
 type Props = {
     min: number;
     max: number;
-    binCount: number;
     isPlaying: boolean;
+    isEnded: boolean;
+    settings: SpectrogramSettings;
     onProcess: () => Float32Array;
 } & JSX.IntrinsicElements["div"];
 
-export const Spectrogram: FC<Props> = ({
-    min,
-    max,
-    binCount,
-    isPlaying,
-    onProcess,
-    ...rest
-}) => {
-    const graphWidth = 10000;
-    const graphHeight = 600;
-    const requestRef = useRef<number>();
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const position = useRef(0);
-    const { current: colorScale } = useRef(
-        scaleLinear<string, number>()
-            .range(["transparent", "#ffce00", "red"])
-            .domain([min, (max - min) / 2 + min, max])
-            .interpolate(interpolateHcl),
-    );
-    const { current: yScale } = useRef(
-        scaleLinear().range([graphHeight, 0]).domain([0, binCount]),
-    );
+const frequencyToBinIndex = (
+    frequency: number,
+    sampleRate: number,
+    windowSize: number,
+) => (frequency * windowSize) / sampleRate;
 
-    useEffect(() => {
+const padding = { left: 10, right: 10 };
+export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
+    (
+        { min, max, isPlaying, isEnded, settings, onProcess, ...rest },
+        canvasRef,
+    ) => {
+        const graphWidth = 10000;
+        const graphHeight = 600;
         const pointWidth = 1;
-        const pointHeight = graphHeight / binCount;
-        const animate = () => {
-            if (!requestRef.current || !canvasRef.current) return;
-            const ctx = canvasRef.current.getContext("2d");
-            if (!ctx) return;
-            const data = onProcess();
-            data.forEach((value, i) => {
-                ctx.fillStyle = `${colorScale(value)}`;
-                ctx.fillRect(
-                    position.current * pointWidth,
-                    yScale(i),
-                    pointWidth,
-                    pointHeight,
-                );
-            });
-            position.current = position.current + 1;
-            requestRef.current = requestAnimationFrame(animate);
-        };
-        if (isPlaying) {
-            requestRef.current = requestAnimationFrame(animate);
-        }
-        return () => {
-            console.log(position.current);
-            cancelAnimationFrame(requestRef.current || 0);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isPlaying]);
+        const canvas = (canvasRef as MutableRefObject<HTMLCanvasElement | null>)
+            .current;
 
-    return (
-        <div
-            className={css.container}
-            style={{ width: 1000, height: graphHeight }}
-            {...rest}
-        >
-            <canvas
-                className={css.canvas}
-                width={graphWidth}
-                height={graphHeight}
-                ref={canvasRef}
-            />
-            <svg width={graphWidth} height={graphHeight} className={css.svg} />
-        </div>
-    );
-};
+        const requestRef = useRef<number>();
+        const position = useRef(padding.left);
+        const { current: colorScale } = useRef(
+            scaleLinear<string, number>()
+                .range(settings.colors)
+                .domain([min, (max - min) / 2 + min, max])
+                .interpolate(interpolateHcl),
+        );
+        const { current: yScale } = useRef(
+            scaleLinear()
+                .range([0, graphHeight])
+                .domain([0, settings.binCount]),
+        );
+
+        useEffect(() => {
+            const ctx = canvas?.getContext("2d");
+            if (!ctx) return;
+            const yMin = frequencyToBinIndex(
+                settings.frequency.min,
+                settings.sampleRate,
+                settings.windowSize,
+            );
+            const yMax = frequencyToBinIndex(
+                settings.frequency.max,
+                settings.sampleRate,
+                settings.windowSize,
+            );
+            const yScaling = graphHeight / (yScale(yMax) - yScale(yMin));
+            // const img = ctx.getImageData(0, 0, graphWidth, graphHeight);
+            // ctx.drawImage(
+            //     img,
+            //     0,
+            //     0,
+            //     position.current * pointWidth,
+            //     graphHeight * yScaling,
+            // );
+            ctx.scale(1, yScaling);
+            ctx.translate(0, -(graphHeight - yScale(yMax)));
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [
+            settings.frequency.max,
+            settings.frequency.min,
+            settings.sampleRate,
+            settings.windowSize,
+            yScale,
+        ]);
+
+        useEffect(() => {
+            const ctx = canvas?.getContext("2d");
+            if (isEnded && canvas && ctx) {
+                const img = ctx.getImageData(0, 0, graphWidth, graphHeight);
+                canvas.width = position.current * pointWidth + padding.right;
+                ctx.putImageData(img, 0, 0);
+            }
+        }, [canvas, isEnded]);
+
+        useEffect(() => {
+            const pointHeight = graphHeight / settings.binCount;
+            const animate = () => {
+                if (!requestRef.current || !canvas) return;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return;
+                const data = onProcess();
+                data.forEach((value, y) => {
+                    ctx.fillStyle = `${colorScale(value)}`;
+                    ctx.fillRect(
+                        position.current * pointWidth,
+                        graphHeight - yScale(y),
+                        pointWidth,
+                        pointHeight,
+                    );
+                });
+                position.current = position.current + 1;
+                requestRef.current = requestAnimationFrame(animate);
+            };
+            if (isPlaying) {
+                requestRef.current = requestAnimationFrame(animate);
+            }
+            return () => {
+                cancelAnimationFrame(requestRef.current || 0);
+            };
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [isPlaying]);
+
+        return (
+            <div
+                className={css.container}
+                style={{ width: 1000, height: graphHeight }}
+                {...rest}
+            >
+                <canvas
+                    className={css.canvas}
+                    width={graphWidth}
+                    height={graphHeight}
+                    ref={canvasRef}
+                />
+            </div>
+        );
+    },
+);
