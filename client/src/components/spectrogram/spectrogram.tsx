@@ -119,6 +119,10 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
                     containerRef.current.scrollLeft = pos - graphMaxWidth;
                 }
                 position.current = position.current + 1;
+                canvas.setAttribute(
+                    "data-current-position",
+                    `${position.current}`,
+                );
                 requestRef.current = requestAnimationFrame(animate);
             };
             if (isPlaying) {

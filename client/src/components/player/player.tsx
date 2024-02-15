@@ -112,7 +112,22 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
 
     const onDownload = useCallback(() => {
         if (!canvasRef.current || !videoMeta) return;
-        const canvasUrl = canvasRef.current.toDataURL("image/png", 1);
+        const height = canvasRef.current.height;
+        const currentWidth = parseInt(
+            canvasRef.current.getAttribute("data-current-position") || "0",
+            10,
+        );
+        const img = canvasRef.current
+            .getContext("2d")
+            ?.getImageData(0, 0, currentWidth, height);
+        if (!img) return;
+
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = currentWidth;
+        tmpCanvas.height = height;
+        tmpCanvas.getContext("2d")?.putImageData(img, 0, 0);
+
+        const canvasUrl = tmpCanvas.toDataURL("image/png", 1);
         const createEl = document.createElement("a");
         createEl.href = canvasUrl;
         createEl.download = `Spectrogram-${videoMeta.title}`;
