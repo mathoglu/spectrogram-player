@@ -18,9 +18,10 @@
 .titleContainer, .link {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
 }
 
 .title {
     text-align: right;
+    font-size: 18px;
 }

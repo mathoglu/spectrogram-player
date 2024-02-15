@@ -3,11 +3,12 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { Player } from "./components/player";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import IconButton from "@mui/material/IconButton";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
-import { GitHub, PlayArrowSharp } from "@mui/icons-material";
-import Link from "@mui/material/Link";
+import { GitHub, HelpOutline, PlayArrowSharp } from "@mui/icons-material";
 import { CircularProgress, FormControl, FormHelperText } from "@mui/material";
+import { HelpButton } from "./components/help-button";
 
 export type VideoMeta = {
     url: string;
@@ -113,14 +114,17 @@ function App() {
             <CssBaseline />
             <div className={css.header}>
                 <div className={css.titleContainer}>
-                    <h1 className={css.title}>spectrogram player</h1>
-                    <Link
-                        href="https://github.com/mathoglu/spectrotest"
-                        target="_blank"
-                        className={css.link}
-                    >
-                        <GitHub />
-                    </Link>
+                    <h1 className={css.title}>SpectrogramPlayer</h1>
+                    <div>
+                        <HelpButton title="Help!" />
+                        <IconButton
+                            href="https://github.com/mathoglu/spectrotest"
+                            target="_blank"
+                            title="Visit GitHub repo"
+                        >
+                            <GitHub />
+                        </IconButton>
+                    </div>
                 </div>
                 {bufferData.current !== null && videoMeta !== null && (
                     <Button
