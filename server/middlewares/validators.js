@@ -4,7 +4,7 @@ function postUrlValidator(req, res, next) {
     if (url.length < 1000 && regex.test(url)) {
         next();
     } else {
-        console.error("Invalid URL");
+        console.error("Request error: Invalid URL");
         res.status(403).send({ error: "Invalid URL" });
     }
 }
