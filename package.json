@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build --workspace @spectrotest/client && cp -r client/dist ./public",
     "start": "npm start --workspace @spectrotest/server"
   },
   "author": "",
