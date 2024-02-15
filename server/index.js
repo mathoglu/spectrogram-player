@@ -24,7 +24,10 @@ app.use(express.json()); // to support JSON-encoded bodies
 app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
 app.use(cors());
 
-//root handler that sends the parameters to getAudio function
+app.get("/", (req, res) => { 
+  res.send()
+});
+
 app.post("/audio", (req, res) => {
   try {
     getAudio(req.body.url, res);
