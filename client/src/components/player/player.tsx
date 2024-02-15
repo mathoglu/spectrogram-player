@@ -13,7 +13,7 @@ import {
     Download,
 } from "@mui/icons-material";
 import { Counter } from "../counter";
-import { Settings, type SpectrogramSettings } from "../settings";
+import { type SpectrogramSettings } from "../settings";
 import type { VideoMeta } from "../../App";
 import { TimeLine } from "../timeline";
 import classNames from "classnames";
@@ -36,7 +36,7 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
     const [settings, setSettings] = useState<SpectrogramSettings>({
         frequency: {
             min: 0,
-            max: 24000,
+            max: 20000,
         },
         colors: ["#000000", "#323232", "#FFAC41", "#FF1E56"],
         duration: 0,
@@ -77,6 +77,7 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
         const src = audioSource.current;
         if (isReady && src) {
             analyser.fftSize = 2048;
+            analyser.smoothingTimeConstant = 0;
 
             if (!src || !src.buffer) return;
 
@@ -131,94 +132,115 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
     }, [audioCtx]);
 
     return (
-        isReady && (
-            <div
-                className={classNames(css.container, {
-                    [css.isPlaying]: isPlaying || isEnded,
-                })}
-            >
-                {videoMeta && <div className={css.info}>{videoMeta.title}</div>}
-                {settings.sampleRate !== 0 &&
-                    settings.windowSize !== 0 &&
-                    settings.binCount !== 0 && (
-                        <Spectrogram
-                            ref={canvasRef}
-                            onProcess={onProcess}
-                            max={analyser.maxDecibels}
-                            min={analyser.minDecibels}
-                            isPlaying={isPlaying}
-                            isEnded={isEnded}
-                            settings={settings}
-                        />
+        <div
+            className={classNames(css.container, {
+                [css.hideControlbar]: isPlaying,
+                [css.ready]: isReady,
+            })}
+        >
+            {isReady && (
+                <>
+                    {videoMeta && (
+                        <div className={css.info}>{videoMeta.title}</div>
                     )}
-                <div className={css.controlBar}>
-                    <div className={css.timeline}>
-                        <TimeLine
-                            isPlaying={isPlaying}
-                            getTime={() => audioCtx.currentTime}
-                            duration={settings.duration}
-                        />
-                    </div>
-                    <div className={css.left}>
-                        <IconButton
-                            disabled={isEnded}
-                            onClick={isPlaying ? onPause : onStart}
-                        >
-                            {isPlaying ? (
-                                <PauseCircleFilled />
-                            ) : (
-                                <PlayCircleFilled />
-                            )}
-                        </IconButton>
-
-                        <div className={css.volumeButton}>
-                            <IconButton disabled={isEnded}>
-                                {volume === 0 ? (
-                                    <VolumeOff onClick={() => setVolume(60)} />
+                    {settings.sampleRate !== 0 &&
+                        settings.windowSize !== 0 &&
+                        settings.binCount !== 0 && (
+                            <Spectrogram
+                                ref={canvasRef}
+                                onProcess={onProcess}
+                                max={analyser.maxDecibels}
+                                min={analyser.minDecibels}
+                                isPlaying={isPlaying}
+                                isEnded={isEnded}
+                                settings={settings}
+                            />
+                        )}
+                    <div className={css.controlBar}>
+                        <div className={css.timeline}>
+                            <TimeLine
+                                isPlaying={isPlaying}
+                                getTime={() => audioCtx.currentTime}
+                                duration={settings.duration}
+                            />
+                        </div>
+                        <div className={css.left}>
+                            <IconButton
+                                disabled={isEnded}
+                                onClick={isPlaying ? onPause : onStart}
+                                title={isPlaying ? "Pause" : "Play"}
+                            >
+                                {isPlaying ? (
+                                    <PauseCircleFilled />
                                 ) : (
-                                    <VolumeUp onClick={() => setVolume(0)} />
+                                    <PlayCircleFilled />
                                 )}
                             </IconButton>
-                        </div>
-                        <div className={css.volumeControl}>
-                            <div className={css.sliderContainer}>
-                                <Slider
-                                    className={css.volumeInput}
-                                    value={volume}
-                                    min={0}
-                                    step={1}
-                                    max={100}
-                                    size="small"
-                                    onChange={(_e, value) =>
-                                        setVolume(value as number)
-                                    }
-                                />
+
+                            <div className={css.volumeButton}>
+                                <IconButton
+                                    title="Volume"
+                                    onClick={() => {
+                                        if (volume === 0) {
+                                            setVolume(60);
+                                        } else {
+                                            setVolume(0);
+                                        }
+                                    }}
+                                    disabled={isEnded}
+                                >
+                                    {volume === 0 ? (
+                                        <VolumeOff />
+                                    ) : (
+                                        <VolumeUp />
+                                    )}
+                                </IconButton>
                             </div>
+                            <div className={css.volumeControl}>
+                                <div className={css.sliderContainer}>
+                                    <Slider
+                                        className={css.volumeInput}
+                                        value={volume}
+                                        min={0}
+                                        step={1}
+                                        max={100}
+                                        size="small"
+                                        onChange={(_e, value) =>
+                                            setVolume(value as number)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                            <Counter
+                                duration={settings.duration}
+                                isPlaying={isPlaying}
+                                className={css.counter}
+                                getTime={() => audioCtx.currentTime}
+                            />
                         </div>
-                        <Counter
-                            duration={settings.duration}
-                            isPlaying={isPlaying}
-                            className={css.counter}
-                            getTime={() => audioCtx.currentTime}
-                        />
+                        <div className={css.right}>
+                            {/* TODO */}
+                            {/* <Settings
+                                className={css.settings}
+                                onSave={newSettings => {
+                                    setSettings(current => ({
+                                        ...current,
+                                        ...newSettings,
+                                    }));
+                                }}
+                                settings={settings}
+                            /> */}
+                            <IconButton
+                                title="Export as .png"
+                                disabled={isPlaying}
+                                onClick={onDownload}
+                            >
+                                <Download />
+                            </IconButton>
+                        </div>
                     </div>
-                    <div className={css.right}>
-                        <Settings
-                            className={css.settings}
-                            onSave={newSettings => {
-                                setSettings(current => ({
-                                    ...current,
-                                    ...newSettings,
-                                }));
-                            }}
-                            settings={settings}
-                        />
-                        <IconButton disabled={isPlaying} onClick={onDownload}>
-                            <Download />
-                        </IconButton>
-                    </div>
-                </div>
-            </div>
-        )
+                </>
+            )}
+        </div>
     );
 };

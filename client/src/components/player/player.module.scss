@@ -1,20 +1,31 @@
 .container {
-    position: relative;
-    background-color: black;
-    padding: 12px;
-    border-radius: 12px;
-    overflow: hidden;
+  position: relative;
+  background-color: black;
+  padding: 0 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 1024px;
+  height: 600px;
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
 
-    &.isPlaying {
-      .controlBar {
-        transition: transform 200ms ease-in-out;
-        transform: translateY(calc(100% + 2px));
-      }
-      &:hover .controlBar{
-        transform: translateY(0);
-      }
+  &.ready {
+    opacity: 1;
+  }
+
+  &.hideControlbar {
+    .controlBar {
+      transform: translateY(calc(100%));
+    }
+    &:hover .controlBar{
+      transform: translateY(0);
     }
   }
+}
+
+.info {
+  margin-top: 12px;
+}
 
 .timeline {
   position: absolute;
@@ -25,8 +36,8 @@
 
 .controlBar {
   position: absolute;
-  bottom: 12px;
-  left: 0px;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 50px;
   background-color: transparent;
@@ -34,6 +45,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transform: translateY(0);
+  transition: transform 200ms ease-in-out;
 }
 
 .left {
