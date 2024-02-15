@@ -1,4 +1,3 @@
-const fs = require('fs');
 const ytdl = require("ytdl-core");
 const express = require("express");
 var cors = require("cors");
@@ -27,7 +26,6 @@ app.use(cors());
 
 //root handler that sends the parameters to getAudio function
 app.post("/audio", (req, res) => {
-  console.log(req.body)
   try {
     getAudio(req.body.url, res);
   } catch(e) {  
@@ -36,7 +34,6 @@ app.post("/audio", (req, res) => {
 });
 
 app.post("/info", (req, res) => {
-  console.log(req.body)
   try {
     getInfo(req.body.url, res);
   } catch(e) {  
@@ -46,5 +43,5 @@ app.post("/info", (req, res) => {
 
 
 http.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });
