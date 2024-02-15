@@ -3,68 +3,86 @@
     background-color: black;
     padding: 12px;
     border-radius: 12px;
-  }
-
-  .controlBar {
-    position: absolute;
-    bottom: 12px;
-    left: 0px;
-    width: 100%;
-    height: 50px;
-    background-color: transparent;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .left {
-    display: flex;
-    align-items: center;
-  }
-
-  .right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-  
-  .volumeButton:hover + .volumeControl {
-    max-width: 80px;
-  }
-  
-  .icon {
-    background: none;
-    width: 24px;
-    height: 24px;
-  }
-  
-  .volumeControl {
     overflow: hidden;
-    color: white;
-    max-width: 0px;
-    transition: max-width 200ms ease-in-out;
-  
-    &:hover {
-      max-width: 80px;
+
+    &.isPlaying {
+      .controlBar {
+        transition: transform 200ms ease-in-out;
+        transform: translateY(calc(100% + 2px));
+      }
+      &:hover .controlBar{
+        transform: translateY(0);
+      }
     }
   }
-  
-  .sliderContainer {
-    margin: 0 12px;
-    width: 56px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .volumeInput {
-    width: 80px;
-  }
 
-  .counter {
-    height: 40px;
-  }
+.timeline {
+  position: absolute;
+  top: -2px;
+  left: 10px;
+  width: calc(100% - 20px);
+}
 
-  .settings {
-    justify-self: flex-end;
+.controlBar {
+  position: absolute;
+  bottom: 12px;
+  left: 0px;
+  width: 100%;
+  height: 50px;
+  background-color: transparent;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.volumeButton:hover + .volumeControl {
+  max-width: 80px;
+}
+
+.icon {
+  background: none;
+  width: 24px;
+  height: 24px;
+}
+
+.volumeControl {
+  overflow: hidden;
+  color: white;
+  max-width: 0px;
+  transition: max-width 200ms ease-in-out;
+
+  &:hover {
+    max-width: 80px;
   }
+}
+
+.sliderContainer {
+  margin: 0 12px;
+  width: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.volumeInput {
+  width: 80px;
+}
+
+.counter {
+  height: 40px;
+}
+
+.settings {
+  justify-self: flex-end;
+}

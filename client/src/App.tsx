@@ -6,7 +6,8 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import TextField from "@mui/material/TextField";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
-import { PlayArrowSharp } from "@mui/icons-material";
+import { GitHub, PlayArrowSharp } from "@mui/icons-material";
+import Link from "@mui/material/Link";
 
 export type VideoMeta = {
     url: string;
@@ -100,7 +101,16 @@ function App() {
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
             <div className={css.header}>
-                <h1 className={css.title}>spectrogram player</h1>
+                <div className={css.titleContainer}>
+                    <h1 className={css.title}>spectrogram player</h1>
+                    <Link
+                        href="https://github.com/mathoglu/spectrotest"
+                        target="_blank"
+                        className={css.link}
+                    >
+                        <GitHub />
+                    </Link>
+                </div>
                 {bufferData.current !== null && videoMeta !== null && (
                     <Button
                         variant="text"

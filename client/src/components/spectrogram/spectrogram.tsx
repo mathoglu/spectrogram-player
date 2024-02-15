@@ -115,12 +115,8 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
                         pointHeight,
                     );
                 });
-                if (
-                    pos + padding.right > graphMaxWidth &&
-                    containerRef.current
-                ) {
-                    containerRef.current.scrollLeft =
-                        pos + padding.right - graphMaxWidth;
+                if (pos > graphMaxWidth && containerRef.current) {
+                    containerRef.current.scrollLeft = pos - graphMaxWidth;
                 }
                 position.current = position.current + 1;
                 requestRef.current = requestAnimationFrame(animate);

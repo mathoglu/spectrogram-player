@@ -15,6 +15,8 @@ import {
 import { Counter } from "../counter";
 import { Settings, type SpectrogramSettings } from "../settings";
 import type { VideoMeta } from "../../App";
+import { TimeLine } from "../timeline";
+import classNames from "classnames";
 
 type Props = {
     audioBufferData: ArrayBuffer;
@@ -130,7 +132,11 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
 
     return (
         isReady && (
-            <div className={css.container}>
+            <div
+                className={classNames(css.container, {
+                    [css.isPlaying]: isPlaying || isEnded,
+                })}
+            >
                 {videoMeta && <div className={css.info}>{videoMeta.title}</div>}
                 {settings.sampleRate !== 0 &&
                     settings.windowSize !== 0 &&
@@ -146,6 +152,13 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
                         />
                     )}
                 <div className={css.controlBar}>
+                    <div className={css.timeline}>
+                        <TimeLine
+                            isPlaying={isPlaying}
+                            getTime={() => audioCtx.currentTime}
+                            duration={settings.duration}
+                        />
+                    </div>
                     <div className={css.left}>
                         <IconButton
                             disabled={isEnded}
