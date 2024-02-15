@@ -150,7 +150,7 @@ function App() {
                                     setInputError(null);
                                     setUrl(e.target.value);
                                 }}
-                                placeholder="Add youtube URL here"
+                                placeholder="Link to Youtube video"
                                 disabled={isLoading}
                                 autoFocus
                             />
