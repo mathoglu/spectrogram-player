@@ -34,10 +34,12 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
         canvasRef,
     ) => {
         const graphWidth = 10000;
+        const graphMaxWidth = 1000;
         const graphHeight = 600;
         const pointWidth = 1;
         const canvas = (canvasRef as MutableRefObject<HTMLCanvasElement | null>)
             .current;
+        const containerRef = useRef<HTMLDivElement>(null);
         const requestRef = useRef<number>();
         const position = useRef(padding.left);
         const { current: colorScale } = useRef(
@@ -51,6 +53,12 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
                 .range([0, graphHeight])
                 .domain([0, settings.binCount]),
         );
+
+        useEffect(() => {
+            if (containerRef.current) {
+                containerRef.current.scrollLeft = 0;
+            }
+        }, []);
 
         useEffect(() => {
             const ctx = canvas?.getContext("2d");
@@ -97,15 +105,23 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
                 const ctx = canvas.getContext("2d");
                 if (!ctx) return;
                 const data = onProcess();
+                const pos = position.current * pointWidth;
                 data.forEach((value, y) => {
                     ctx.fillStyle = `${colorScale(value)}`;
                     ctx.fillRect(
-                        position.current * pointWidth,
+                        pos,
                         graphHeight - yScale(y),
                         pointWidth,
                         pointHeight,
                     );
                 });
+                if (
+                    pos + padding.right > graphMaxWidth &&
+                    containerRef.current
+                ) {
+                    containerRef.current.scrollLeft =
+                        pos + padding.right - graphMaxWidth;
+                }
                 position.current = position.current + 1;
                 requestRef.current = requestAnimationFrame(animate);
             };
@@ -120,6 +136,7 @@ export const Spectrogram = forwardRef<HTMLCanvasElement, Props>(
 
         return (
             <div
+                ref={containerRef}
                 className={css.container}
                 style={{ width: 1000, height: graphHeight }}
                 {...rest}
