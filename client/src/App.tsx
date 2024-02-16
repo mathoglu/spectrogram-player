@@ -6,12 +6,12 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
-import { GitHub, PlayArrowSharp } from "@mui/icons-material";
+import { GitHub, PlayArrowSharp, Mic } from "@mui/icons-material";
 import { CircularProgress, FormControl, FormHelperText } from "@mui/material";
 import { HelpButton } from "./components/help-button";
 
-export type VideoMeta = {
-    url: string;
+export type Meta = {
+    url: string | null;
     title: string;
 };
 
@@ -45,33 +45,63 @@ const darkTheme = createTheme({
 const apiURL = import.meta.env.VITE_API_URL || "";
 
 function App() {
-    const bufferData = useRef<ArrayBuffer | null>(null);
+    const audioSource = useRef<
+        AudioBufferSourceNode | MediaStreamAudioSourceNode
+    >(null);
+    const { current: audioCtx } = useRef(
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        new (window.AudioContext || window.webkitAudioContext)(),
+    );
     const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
+    const [meta, setMeta] = useState<Meta | null>(null);
     const [inputError, setInputError] = useState<string | null>(null);
 
-    const onLoadAudio = useCallback(async (url: string) => {
-        try {
-            if (!url) return;
-            const audio = await fetch(`${apiURL}/audio`, {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ url }),
-            });
-            if (!audio.ok) {
-                const { error } = await audio.json();
-                throw new Error(error);
+    const onLoadAudio = useCallback(
+        async (url: string) => {
+            try {
+                if (!url) return;
+                const audio = await fetch(`${apiURL}/audio`, {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ url }),
+                });
+                if (!audio.ok) {
+                    const { error } = await audio.json();
+                    throw new Error(error);
+                }
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                audioSource.current = audioCtx.createBufferSource();
+                audioSource.current.buffer = await audioCtx.decodeAudioData(
+                    await audio.arrayBuffer(),
+                );
+            } catch (e) {
+                setInputError((e as Error).message);
+                console.error(e);
             }
-            bufferData.current = await audio.arrayBuffer();
-        } catch (e) {
-            setInputError((e as Error).message);
-            console.error(e);
+        },
+        [audioCtx],
+    );
+
+    const onMicrophone = useCallback(async () => {
+        if (navigator.mediaDevices) {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            audioSource.current = audioCtx.createMediaStreamSource(stream);
+            setMeta({ title: "You", url: null });
+        } else {
+            // browser unable to access media devices
+            // (update your browser)
         }
-    }, []);
+    }, [audioCtx]);
 
     const onLoadInfo = useCallback(async (url: string) => {
         try {
@@ -88,7 +118,7 @@ function App() {
                 throw new Error(error);
             }
             const { title } = await (info.json() as Promise<{ title: string }>);
-            setVideoMeta({ title, url });
+            setMeta({ title, url });
         } catch (e: unknown) {
             setInputError((e as Error).message);
             console.error(e);
@@ -99,14 +129,14 @@ function App() {
         async (url: string) => {
             setIsLoading(true);
             await Promise.all([onLoadInfo(url), onLoadAudio(url)]);
+
             setIsLoading(false);
         },
         [onLoadAudio, onLoadInfo],
     );
 
     const onNew = useCallback(() => {
-        setVideoMeta(null);
-        bufferData.current = null;
+        setMeta(null);
     }, []);
 
     return (
@@ -126,7 +156,7 @@ function App() {
                         </IconButton>
                     </div>
                 </div>
-                {bufferData.current !== null && videoMeta !== null && (
+                {audioSource.current !== null && meta !== null && (
                     <Button
                         variant="text"
                         startIcon={<PlayArrowSharp />}
@@ -136,11 +166,12 @@ function App() {
                     </Button>
                 )}
             </div>
-            {bufferData.current !== null && videoMeta !== null ? (
+            {audioSource.current !== null && meta !== null ? (
                 <div className={css.playerContainer}>
                     <Player
-                        videoMeta={videoMeta}
-                        audioBufferData={bufferData.current}
+                        meta={meta}
+                        context={audioCtx}
+                        source={audioSource.current}
                     />
                 </div>
             ) : (
@@ -154,7 +185,7 @@ function App() {
                                     setInputError(null);
                                     setUrl(e.target.value);
                                 }}
-                                placeholder="Link to Youtube video"
+                                placeholder="Link to YouTube video"
                                 disabled={isLoading}
                                 autoFocus
                             />
@@ -165,17 +196,28 @@ function App() {
                             )}
                         </FormControl>
                         {!isLoading ? (
-                            <Button
-                                disabled={!url || !!inputError}
-                                variant="text"
-                                size="large"
-                                startIcon={<PlayArrowSharp />}
-                                onClick={() => {
-                                    onLoadData(url);
-                                }}
-                            >
-                                Play
-                            </Button>
+                            <>
+                                <IconButton
+                                    disabled={!url || !!inputError}
+                                    size="large"
+                                    onClick={() => {
+                                        onLoadData(url);
+                                    }}
+                                    title="use YouTube link"
+                                >
+                                    <PlayArrowSharp />
+                                </IconButton>
+                                <div className={css.separator}>/</div>
+                                <IconButton
+                                    size="large"
+                                    onClick={() => {
+                                        onMicrophone();
+                                    }}
+                                    title="use microphone"
+                                >
+                                    <Mic />
+                                </IconButton>
+                            </>
                         ) : (
                             <CircularProgress size="40px" />
                         )}

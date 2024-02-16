@@ -14,26 +14,29 @@ import {
 } from "@mui/icons-material";
 import { Counter } from "../counter";
 import { type SpectrogramSettings } from "../settings";
-import type { VideoMeta } from "../../App";
+import type { Meta } from "../../App";
 import { TimeLine } from "../timeline";
 import classNames from "classnames";
 
 type Props = {
-    audioBufferData: ArrayBuffer;
-    videoMeta: VideoMeta;
+    meta: Meta;
+    source: AudioBufferSourceNode | MediaStreamAudioSourceNode;
+    context: AudioContext;
 };
-export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
+const isStream = (src: Props["source"]): src is MediaStreamAudioSourceNode =>
+    src instanceof MediaStreamAudioSourceNode;
+
+export const Player: FC<Props> = ({
+    meta,
+    context: audioCtx,
+    source: audioSource,
+}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const { current: audioCtx } = useRef(
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        new (window.AudioContext || window.webkitAudioContext)(),
-    );
-    const audioSource = useRef<AudioBufferSourceNode>(null);
     const { current: gain } = useRef(audioCtx.createGain());
     const { current: analyser } = useRef(audioCtx.createAnalyser());
 
     const [settings, setSettings] = useState<SpectrogramSettings>({
+        type: "buffer",
         frequency: {
             min: 0,
             max: 20000,
@@ -44,25 +47,24 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
         windowSize: 0,
         binCount: 0,
     });
-    const [isReady, setIsReady] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isEnded, setIsEnded] = useState(false);
     const [volume, setVolume] = useState(100);
 
-    useEffect(() => {
-        async function initBuffer() {
-            if (!isReady) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                audioSource.current = audioCtx.createBufferSource();
-                audioSource.current.buffer =
-                    await audioCtx.decodeAudioData(audioBufferData);
-                setIsReady(true);
-            }
-        }
+    // useEffect(() => {
+    //     async function initBuffer() {
+    //         if (!isReady) {
+    //             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //             // @ts-ignore
+    //             audioSource.current = audioCtx.createBufferSource();
+    //             audioSource.current.buffer =
+    //                 await audioCtx.decodeAudioData(audioBufferData);
+    //             setIsReady(true);
+    //         }
+    //     }
 
-        initBuffer();
-    }, [audioBufferData, audioCtx, isReady]);
+    //     initBuffer();
+    // }, [audioBufferData, audioCtx, isReady]);
 
     useEffect(() => {
         gain.gain.value = volume / 100;
@@ -74,20 +76,38 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
             setIsEnded(true);
             setIsPlaying(false);
         }
-        const src = audioSource.current;
-        if (isReady && src) {
-            analyser.fftSize = 2048;
-            analyser.smoothingTimeConstant = 0;
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0;
 
-            if (!src || !src.buffer) return;
+        if (isStream(audioSource)) {
+            audioSource
+                .connect(analyser)
+                .connect(gain)
+                .connect(audioCtx.destination);
 
-            src.connect(analyser).connect(gain).connect(audioCtx.destination);
-            src.start();
+            setSettings(current => ({
+                ...current,
+                type: "stream",
+                duration: null,
+                binCount: analyser.frequencyBinCount,
+                windowSize: analyser.fftSize,
+                sampleRate: audioCtx.sampleRate,
+                frequency: {
+                    min: 0,
+                    max: audioCtx.sampleRate / 2,
+                },
+            }));
+        } else {
+            audioSource
+                .connect(analyser)
+                .connect(gain)
+                .connect(audioCtx.destination);
+            audioSource.start();
             audioCtx.suspend();
 
             setSettings(current => ({
                 ...current,
-                duration: src.buffer?.duration || 0,
+                duration: audioSource.buffer?.duration || 0,
                 binCount: analyser.frequencyBinCount,
                 windowSize: analyser.fftSize,
                 sampleRate: audioCtx.sampleRate,
@@ -97,12 +117,12 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
                 },
             }));
 
-            src.addEventListener("ended", sourceEnded);
+            audioSource.addEventListener("ended", sourceEnded);
             return () => {
-                src.removeEventListener("ended", sourceEnded);
+                audioSource.removeEventListener("ended", sourceEnded);
             };
         }
-    }, [analyser, gain, audioCtx, isReady, audioSource]);
+    }, [analyser, gain, audioCtx, audioSource]);
 
     const onProcess = useCallback(() => {
         const data = new Float32Array(analyser.frequencyBinCount);
@@ -111,7 +131,7 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
     }, [analyser]);
 
     const onDownload = useCallback(() => {
-        if (!canvasRef.current || !videoMeta) return;
+        if (!canvasRef.current || !meta) return;
         const height = canvasRef.current.height;
         const currentWidth = parseInt(
             canvasRef.current.getAttribute("data-current-position") || "0",
@@ -130,10 +150,10 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
         const canvasUrl = tmpCanvas.toDataURL("image/png", 1);
         const createEl = document.createElement("a");
         createEl.href = canvasUrl;
-        createEl.download = `Spectrogram-${videoMeta.title}`;
+        createEl.download = `Spectrogram-${meta.title}`;
         createEl.click();
         createEl.remove();
-    }, [videoMeta]);
+    }, [meta]);
 
     const onStart = useCallback(() => {
         audioCtx.resume();
@@ -150,92 +170,91 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
         <div
             className={classNames(css.container, {
                 [css.hideControlbar]: isPlaying,
-                [css.ready]: isReady,
+                [css.ready]: true,
             })}
         >
-            {isReady && (
-                <>
-                    {videoMeta && (
-                        <div className={css.info}>{videoMeta.title}</div>
-                    )}
-                    {settings.sampleRate !== 0 &&
-                        settings.windowSize !== 0 &&
-                        settings.binCount !== 0 && (
-                            <Spectrogram
-                                ref={canvasRef}
-                                onProcess={onProcess}
-                                max={analyser.maxDecibels}
-                                min={analyser.minDecibels}
-                                isPlaying={isPlaying}
-                                isEnded={isEnded}
-                                settings={settings}
-                            />
+            {meta && <div className={css.info}>{meta.title}</div>}
+            {settings.sampleRate !== 0 &&
+                settings.windowSize !== 0 &&
+                settings.binCount !== 0 && (
+                    <Spectrogram
+                        ref={canvasRef}
+                        onProcess={onProcess}
+                        max={analyser.maxDecibels}
+                        min={analyser.minDecibels}
+                        isPlaying={isPlaying}
+                        isEnded={isEnded}
+                        settings={settings}
+                    />
+                )}
+            <div className={css.controlBar}>
+                {settings.duration !== null && (
+                    <div className={css.timeline}>
+                        <TimeLine
+                            isPlaying={isPlaying}
+                            getTime={() => audioCtx.currentTime}
+                            duration={settings.duration}
+                        />
+                    </div>
+                )}
+                <div className={css.left}>
+                    <IconButton
+                        disabled={isEnded}
+                        onClick={isPlaying ? onPause : onStart}
+                        title={isPlaying ? "Pause" : "Play"}
+                    >
+                        {isPlaying ? (
+                            <PauseCircleFilled />
+                        ) : (
+                            <PlayCircleFilled />
                         )}
-                    <div className={css.controlBar}>
-                        <div className={css.timeline}>
-                            <TimeLine
-                                isPlaying={isPlaying}
-                                getTime={() => audioCtx.currentTime}
-                                duration={settings.duration}
-                            />
-                        </div>
-                        <div className={css.left}>
-                            <IconButton
-                                disabled={isEnded}
-                                onClick={isPlaying ? onPause : onStart}
-                                title={isPlaying ? "Pause" : "Play"}
-                            >
-                                {isPlaying ? (
-                                    <PauseCircleFilled />
-                                ) : (
-                                    <PlayCircleFilled />
-                                )}
-                            </IconButton>
+                    </IconButton>
 
-                            <div className={css.volumeButton}>
-                                <IconButton
-                                    title="Volume"
-                                    onClick={() => {
-                                        if (volume === 0) {
-                                            setVolume(60);
-                                        } else {
-                                            setVolume(0);
-                                        }
-                                    }}
-                                    disabled={isEnded}
-                                >
-                                    {volume === 0 ? (
-                                        <VolumeOff />
-                                    ) : (
-                                        <VolumeUp />
-                                    )}
-                                </IconButton>
-                            </div>
-                            <div className={css.volumeControl}>
-                                <div className={css.sliderContainer}>
-                                    <Slider
-                                        className={css.volumeInput}
-                                        value={volume}
-                                        min={0}
-                                        step={1}
-                                        max={100}
-                                        size="small"
-                                        onChange={(_e, value) =>
-                                            setVolume(value as number)
-                                        }
-                                    />
-                                </div>
-                            </div>
-                            <Counter
-                                duration={settings.duration}
-                                isPlaying={isPlaying}
-                                className={css.counter}
-                                getTime={() => audioCtx.currentTime}
+                    <div
+                        className={classNames(css.volumeButton, {
+                            [css.disabled]:
+                                settings.type === "stream" || isEnded,
+                        })}
+                    >
+                        <IconButton
+                            disabled={settings.type === "stream" || isEnded}
+                            title="Volume"
+                            onClick={() => {
+                                if (volume === 0) {
+                                    setVolume(60);
+                                } else {
+                                    setVolume(0);
+                                }
+                            }}
+                        >
+                            {volume === 0 ? <VolumeOff /> : <VolumeUp />}
+                        </IconButton>
+                    </div>
+                    <div className={css.volumeControl}>
+                        <div className={css.sliderContainer}>
+                            <Slider
+                                className={css.volumeInput}
+                                value={volume}
+                                min={0}
+                                step={1}
+                                max={100}
+                                size="small"
+                                onChange={(_e, value) =>
+                                    setVolume(value as number)
+                                }
                             />
                         </div>
-                        <div className={css.right}>
-                            {/* TODO */}
-                            {/* <Settings
+                    </div>
+                    <Counter
+                        duration={settings.duration}
+                        isPlaying={isPlaying}
+                        className={css.counter}
+                        getTime={() => audioCtx.currentTime}
+                    />
+                </div>
+                <div className={css.right}>
+                    {/* TODO */}
+                    {/* <Settings
                                 className={css.settings}
                                 onSave={newSettings => {
                                     setSettings(current => ({
@@ -245,17 +264,15 @@ export const Player: FC<Props> = ({ audioBufferData, videoMeta }) => {
                                 }}
                                 settings={settings}
                             /> */}
-                            <IconButton
-                                title="Export as .png"
-                                disabled={isPlaying}
-                                onClick={onDownload}
-                            >
-                                <Download />
-                            </IconButton>
-                        </div>
-                    </div>
-                </>
-            )}
+                    <IconButton
+                        title="Export as .png"
+                        disabled={isPlaying}
+                        onClick={onDownload}
+                    >
+                        <Download />
+                    </IconButton>
+                </div>
+            </div>
         </div>
     );
 };

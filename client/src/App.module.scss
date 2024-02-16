@@ -11,8 +11,14 @@
 
 .inputContainer {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 16px;
+}
+
+.separator {
+    display: inline-block;
+    height: 100%;
+    line-height: 100%;
 }
 
 .titleContainer, .link {

@@ -62,7 +62,7 @@
   justify-content: flex-end;
 }
 
-.volumeButton:hover + .volumeControl {
+.volumeButton:not(.disabled):hover + .volumeControl {
   max-width: 80px;
 }
 

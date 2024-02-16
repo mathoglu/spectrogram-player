@@ -7,11 +7,12 @@ import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 
 export type SpectrogramSettings = {
+    type: "stream" | "buffer";
     frequency: {
         min: number;
         max: number;
     };
-    duration: number;
+    duration: number | null;
     binCount: number;
     sampleRate: number;
     windowSize: number;

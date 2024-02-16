@@ -3,7 +3,7 @@ import css from "./counter.module.scss";
 import classNames from "classnames";
 
 type Props = {
-    duration: number;
+    duration: number | null;
     isPlaying: boolean;
     getTime: () => number;
 } & JSX.IntrinsicElements["div"];
@@ -43,8 +43,12 @@ export const Counter: FC<Props> = ({
     return (
         <div className={classNames(className, css.container)} {...rest}>
             <span>{formatTime(counter)}</span>
-            <span>/</span>
-            <span>{formatTime(duration)}</span>
+            {duration !== null && (
+                <>
+                    <span>/</span>
+                    <span>{formatTime(duration)}</span>
+                </>
+            )}
         </div>
     );
 };

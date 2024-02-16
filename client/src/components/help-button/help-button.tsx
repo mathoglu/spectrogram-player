@@ -39,8 +39,10 @@ export const HelpButton: FC<Props> = ({ className, ...rest }) => {
                     >
                         spectrogram
                     </Link>{" "}
-                    from the audio from a YouTube video. Add a link to any
-                    YouTube video in the input below to get started.
+                    from the audio from a YouTube video or by using your
+                    computer microphone. Add a link to any YouTube video in the
+                    input below <strong>or</strong> click the microphone to get
+                    started.
                 </div>
             </Popover>
         </div>
