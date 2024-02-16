@@ -148,7 +148,7 @@ function App() {
                     <div>
                         <HelpButton title="Help!" />
                         <IconButton
-                            href="https://github.com/mathoglu/spectrotest"
+                            href="https://github.com/mathoglu/spectrogram-player"
                             target="_blank"
                             title="Visit GitHub repo"
                         >
