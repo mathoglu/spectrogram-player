@@ -160,7 +160,6 @@ export const Player: FC<Props> = ({
     return (
         <div
             className={classNames(css.container, {
-                [css.hideControlbar]: isPlaying,
                 [css.ready]: started,
             })}
         >

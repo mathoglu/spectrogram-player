@@ -13,12 +13,11 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    justify-content: center;
 }
 
 .separator {
     display: inline-block;
-    height: 100%;
-    line-height: 100%;
 }
 
 .titleContainer, .link {

@@ -12,15 +12,15 @@
   &.ready {
     opacity: 1;
   }
-
-  &.hideControlbar {
-    .controlBar {
-      transform: translateY(calc(100%));
-    }
-    &:hover .controlBar{
-      transform: translateY(0);
-    }
+ 
+  .controlBar {
+    transform: translateY(calc(100%));
   }
+  
+  &:hover .controlBar{
+    transform: translateY(0);
+  }
+  
 }
 
 .info {
