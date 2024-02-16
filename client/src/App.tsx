@@ -10,7 +10,6 @@ import FormHelperText from "@mui/material/FormHelperText";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
 import { GitHub, PlayArrowSharp, Mic, MicOff } from "@mui/icons-material";
-import { CircularProgress, FormControl, FormHelperText } from "@mui/material";
 import { HelpButton } from "./components/help-button";
 
 export type Meta = {
