@@ -6,9 +6,13 @@ import Popover from "@mui/material/Popover";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 
-type Props = JSX.IntrinsicElements["div"];
+type Props = { isMicAvailable: boolean } & JSX.IntrinsicElements["div"];
 
-export const HelpButton: FC<Props> = ({ className, ...rest }) => {
+export const HelpButton: FC<Props> = ({
+    isMicAvailable,
+    className,
+    ...rest
+}) => {
     const ref = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
 
@@ -39,9 +43,10 @@ export const HelpButton: FC<Props> = ({ className, ...rest }) => {
                     >
                         spectrogram
                     </Link>{" "}
-                    from the audio from a YouTube video or by using your
-                    computer microphone. Add a link to any YouTube video in the
-                    input below <strong>or</strong> click the microphone to get
+                    from the audio from a YouTube video
+                    {isMicAvailable && " or by using your computer microphone"}.
+                    Add a link to any YouTube video in the input below
+                    {isMicAvailable ? " or click the microphone " : " "}to get
                     started.
                 </div>
             </Popover>
