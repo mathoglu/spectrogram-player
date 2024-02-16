@@ -4,6 +4,9 @@ import { Player } from "./components/player";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
+import CircularProgress from "@mui/material/CircularProgress";
+import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
 import { GitHub, PlayArrowSharp, Mic, MicOff } from "@mui/icons-material";
@@ -205,8 +208,9 @@ function App() {
                         {!isLoading ? (
                             <>
                                 <IconButton
-                                    disabled={!url || !!inputError}
+                                    disabled={!!inputError}
                                     size="large"
+                                    color="primary"
                                     onClick={() => {
                                         onLoadData(url);
                                     }}
@@ -220,6 +224,7 @@ function App() {
                                         <IconButton
                                             disabled={micError}
                                             size="large"
+                                            color="primary"
                                             onClick={() => {
                                                 onMicrophone();
                                             }}
