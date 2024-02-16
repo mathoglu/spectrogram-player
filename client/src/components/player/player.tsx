@@ -35,6 +35,7 @@ export const Player: FC<Props> = ({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { current: gain } = useRef(audioCtx.createGain());
     const { current: analyser } = useRef(audioCtx.createAnalyser());
+    const [started, setStarted] = useState(false);
 
     const [settings, setSettings] = useState<SpectrogramSettings>({
         type: "youtube",
@@ -54,20 +55,7 @@ export const Player: FC<Props> = ({
         settings.type === "microphone" ? 0 : 100,
     );
 
-    // useEffect(() => {
-    //     async function initBuffer() {
-    //         if (!isReady) {
-    //             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //             // @ts-ignore
-    //             audioSource.current = audioCtx.createBufferSource();
-    //             audioSource.current.buffer =
-    //                 await audioCtx.decodeAudioData(audioBufferData);
-    //             setIsReady(true);
-    //         }
-    //     }
-
-    //     initBuffer();
-    // }, [audioBufferData, audioCtx, isReady]);
+    useEffect(() => setStarted(true), []);
 
     useEffect(() => {
         gain.gain.value = volume / 100;
@@ -173,7 +161,7 @@ export const Player: FC<Props> = ({
         <div
             className={classNames(css.container, {
                 [css.hideControlbar]: isPlaying,
-                [css.ready]: true,
+                [css.ready]: started,
             })}
         >
             {meta && <div className={css.info}>{meta.title}</div>}
