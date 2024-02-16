@@ -4,13 +4,15 @@ import css from "./player.module.scss";
 import { Spectrogram } from "../spectrogram";
 import Slider from "@mui/material/Slider";
 import IconButton from "@mui/material/IconButton";
-
+import Button from "@mui/material/Button";
 import {
     PlayCircleFilled,
     PauseCircleFilled,
     VolumeUp,
     VolumeOff,
     Download,
+    StopCircle,
+    FiberManualRecord,
 } from "@mui/icons-material";
 import { Counter } from "../counter";
 import { type SpectrogramSettings } from "../settings";
@@ -36,7 +38,7 @@ export const Player: FC<Props> = ({
     const { current: analyser } = useRef(audioCtx.createAnalyser());
 
     const [settings, setSettings] = useState<SpectrogramSettings>({
-        type: "buffer",
+        type: "youtube",
         frequency: {
             min: 0,
             max: 20000,
@@ -49,7 +51,9 @@ export const Player: FC<Props> = ({
     });
     const [isPlaying, setIsPlaying] = useState(false);
     const [isEnded, setIsEnded] = useState(false);
-    const [volume, setVolume] = useState(100);
+    const [volume, setVolume] = useState(
+        settings.type === "microphone" ? 0 : 100,
+    );
 
     // useEffect(() => {
     //     async function initBuffer() {
@@ -87,7 +91,7 @@ export const Player: FC<Props> = ({
 
             setSettings(current => ({
                 ...current,
-                type: "stream",
+                type: "microphone",
                 duration: null,
                 binCount: analyser.frequencyBinCount,
                 windowSize: analyser.fftSize,
@@ -198,38 +202,56 @@ export const Player: FC<Props> = ({
                     </div>
                 )}
                 <div className={css.left}>
-                    <IconButton
-                        disabled={isEnded}
-                        onClick={isPlaying ? onPause : onStart}
-                        title={isPlaying ? "Pause" : "Play"}
-                    >
-                        {isPlaying ? (
-                            <PauseCircleFilled />
-                        ) : (
-                            <PlayCircleFilled />
-                        )}
-                    </IconButton>
-
-                    <div
-                        className={classNames(css.volumeButton, {
-                            [css.disabled]:
-                                settings.type === "stream" || isEnded,
-                        })}
-                    >
-                        <IconButton
-                            disabled={settings.type === "stream" || isEnded}
-                            title="Volume"
-                            onClick={() => {
-                                if (volume === 0) {
-                                    setVolume(60);
-                                } else {
-                                    setVolume(0);
-                                }
-                            }}
+                    {settings.type === "microphone" ? (
+                        <Button
+                            onClick={isPlaying ? onPause : onStart}
+                            title={isPlaying ? "Record" : "Stop"}
+                            color="secondary"
+                            startIcon={
+                                isPlaying ? (
+                                    <StopCircle />
+                                ) : (
+                                    <FiberManualRecord />
+                                )
+                            }
                         >
-                            {volume === 0 ? <VolumeOff /> : <VolumeUp />}
+                            {isPlaying ? "Stop" : "Rec"}
+                        </Button>
+                    ) : (
+                        <IconButton
+                            disabled={isEnded}
+                            onClick={isPlaying ? onPause : onStart}
+                            title={isPlaying ? "Pause" : "Play"}
+                        >
+                            {isPlaying ? (
+                                <PauseCircleFilled />
+                            ) : (
+                                <PlayCircleFilled />
+                            )}
                         </IconButton>
-                    </div>
+                    )}
+
+                    {settings.type !== "microphone" && (
+                        <div
+                            className={classNames(css.volumeButton, {
+                                [css.disabled]: isEnded,
+                            })}
+                        >
+                            <IconButton
+                                disabled={isEnded}
+                                title="Volume"
+                                onClick={() => {
+                                    if (volume === 0) {
+                                        setVolume(60);
+                                    } else {
+                                        setVolume(0);
+                                    }
+                                }}
+                            >
+                                {volume === 0 ? <VolumeOff /> : <VolumeUp />}
+                            </IconButton>
+                        </div>
+                    )}
                     <div className={css.volumeControl}>
                         <div className={css.sliderContainer}>
                             <Slider

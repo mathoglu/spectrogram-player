@@ -7,7 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 
 export type SpectrogramSettings = {
-    type: "stream" | "buffer";
+    type: "microphone" | "youtube";
     frequency: {
         min: number;
         max: number;
