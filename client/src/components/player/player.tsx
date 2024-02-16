@@ -11,7 +11,6 @@ import {
     VolumeUp,
     VolumeOff,
     Download,
-    StopCircle,
     FiberManualRecord,
 } from "@mui/icons-material";
 import { Counter } from "../counter";
@@ -209,7 +208,7 @@ export const Player: FC<Props> = ({
                             color="secondary"
                             startIcon={
                                 isPlaying ? (
-                                    <StopCircle />
+                                    <span className={css.squareIcon} />
                                 ) : (
                                     <FiberManualRecord />
                                 )

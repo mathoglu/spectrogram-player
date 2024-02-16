@@ -66,6 +66,19 @@
   max-width: 80px;
 }
 
+.squareIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    width: 11px;
+    height: 11px;
+    background-color: currentColor;
+  }
+}
+
 .icon {
   background: none;
   width: 24px;
