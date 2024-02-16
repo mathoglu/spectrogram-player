@@ -6,7 +6,7 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import { useCallback, useRef, useState } from "react";
 import css from "./App.module.scss";
-import { GitHub, PlayArrowSharp, Mic } from "@mui/icons-material";
+import { GitHub, PlayArrowSharp, Mic, MicOff } from "@mui/icons-material";
 import { CircularProgress, FormControl, FormHelperText } from "@mui/material";
 import { HelpButton } from "./components/help-button";
 
@@ -57,7 +57,8 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [meta, setMeta] = useState<Meta | null>(null);
     const [inputError, setInputError] = useState<string | null>(null);
-    const isMicAvailable = !navigator.mediaDevices;
+    const [micError, setMicError] = useState(false);
+    const isMicAvailable = !!navigator.mediaDevices;
 
     const onLoadAudio = useCallback(
         async (url: string) => {
@@ -91,13 +92,17 @@ function App() {
 
     const onMicrophone = useCallback(async () => {
         if (isMicAvailable) {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-            });
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
-            audioSource.current = audioCtx.createMediaStreamSource(stream);
-            setMeta({ title: "You", url: null });
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                });
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                audioSource.current = audioCtx.createMediaStreamSource(stream);
+                setMeta({ title: "You", url: null });
+            } catch (e) {
+                setMicError(true);
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [audioCtx]);
@@ -213,13 +218,14 @@ function App() {
                                     <>
                                         <div className={css.separator}>/</div>
                                         <IconButton
+                                            disabled={micError}
                                             size="large"
                                             onClick={() => {
                                                 onMicrophone();
                                             }}
                                             title="use microphone"
                                         >
-                                            <Mic />
+                                            {micError ? <MicOff /> : <Mic />}
                                         </IconButton>
                                     </>
                                 )}
