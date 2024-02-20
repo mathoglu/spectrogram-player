@@ -1,5 +1,4 @@
 import { FC, useCallback, useEffect, useRef, useState } from "react";
-// import sineSweepUrl from "../../assets/sample-file-4.wav";
 import css from "./player.module.scss";
 import { Spectrogram } from "../spectrogram";
 import Slider from "@mui/material/Slider";
@@ -51,9 +50,7 @@ export const Player: FC<Props> = ({
     });
     const [isPlaying, setIsPlaying] = useState(false);
     const [isEnded, setIsEnded] = useState(false);
-    const [volume, setVolume] = useState(
-        settings.type === "microphone" ? 0 : 100,
-    );
+    const [volume, setVolume] = useState(100);
 
     useEffect(() => setStarted(true), []);
 
@@ -76,6 +73,7 @@ export const Player: FC<Props> = ({
                 .connect(gain)
                 .connect(audioCtx.destination);
 
+            setVolume(0);
             setSettings(current => ({
                 ...current,
                 type: "microphone",

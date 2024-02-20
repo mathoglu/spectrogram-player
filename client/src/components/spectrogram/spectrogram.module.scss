@@ -1,7 +1,7 @@
 .container {
     position: relative;
     display: grid;
-    overflow-x: scroll;
+    overflow: scroll;
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 
@@ -10,7 +10,16 @@
       }
 }
 
-.canvas, .svg {
+.canvas {
     grid-row: 1;
     grid-column: 1;
+    cursor: zoom-in;
+
+    &.playing {
+        cursor: initial;
+    }
+
+    &.zoomed:not(.playing) {
+        cursor: zoom-out;
+    }
 }
