@@ -96,6 +96,7 @@ export const Player: FC<Props> = ({
 
             setSettings(current => ({
                 ...current,
+                type: "youtube",
                 duration: audioSource.buffer?.duration || 0,
                 binCount: analyser.frequencyBinCount,
                 windowSize: analyser.fftSize,
@@ -151,9 +152,15 @@ export const Player: FC<Props> = ({
     }, [audioCtx]);
 
     const onPause = useCallback(() => {
-        audioCtx.suspend();
-        setIsPlaying(false);
-    }, [audioCtx]);
+        if (settings.type === "microphone") {
+            audioCtx.close();
+            setIsPlaying(false);
+            setIsEnded(true);
+        } else {
+            audioCtx.suspend();
+            setIsPlaying(false);
+        }
+    }, [audioCtx, settings.type]);
 
     return (
         <div
@@ -188,6 +195,7 @@ export const Player: FC<Props> = ({
                 <div className={css.left}>
                     {settings.type === "microphone" ? (
                         <Button
+                            disabled={isEnded}
                             onClick={isPlaying ? onPause : onStart}
                             title={isPlaying ? "Record" : "Stop"}
                             color="secondary"

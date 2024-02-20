@@ -142,7 +142,7 @@ function App() {
     );
 
     const onNew = useCallback(() => {
-        setMeta(null);
+        location.reload();
     }, []);
 
     return (
