@@ -3,15 +3,14 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // matching all API routes
         source: "/api/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
           {
             key: "Access-Control-Allow-Origin",
             value: `${process.env.CLIENT_URL}`,
-          }, // replace this your actual origin
-          { key: "Access-Control-Allow-Methods", value: "OPTIONS,POST" },
+          },
+          { key: "Access-Control-Allow-Methods", value: "OPTIONS,POST,GET" },
           {
             key: "Access-Control-Allow-Headers",
             value:
