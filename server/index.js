@@ -9,17 +9,14 @@ const { getVideoAudio, getVideoDetails } = require("./utils/youtube");
 var http = require("http").createServer(app);
 
 const port = process.env.PORT || 3333;
-const isProd = process.env.NODE_ENV === "production";
 
 app.use(express.json()); // to support JSON-encoded bodies
 app.use(express.urlencoded({ extended: true })); // to support URL-encoded bodies
 app.use(express.static(path.join(__dirname, "../public")));
 
-if (!isProd) {
-    app.use(cors());
-}
+app.use(cors());
 
-app.get("/health", (req, res) => {
+app.get("/", (req, res) => {
     res.status(200).send();
 });
 
