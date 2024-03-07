@@ -1,5 +1,6 @@
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { Analytics } from "@vercel/analytics/react";
 import { Player } from "./components/player";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -240,6 +241,7 @@ function App() {
                     </div>
                 </>
             )}
+            <Analytics />
         </ThemeProvider>
     );
 }
